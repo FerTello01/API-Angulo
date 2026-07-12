@@ -97,7 +97,7 @@ pnpm dev        # Ambos en paralelo
 
 El build falla si Vercel busca `app/` en la raíz del repo. El frontend está en `apps/web/`.
 
-**Configuración recomendada** en Vercel → Project Settings → General:
+**Configuración obligatoria** en Vercel → Project Settings → General:
 
 | Campo | Valor |
 |---|---|
@@ -105,13 +105,13 @@ El build falla si Vercel busca `app/` en la raíz del repo. El frontend está en
 | Install Command | `cd ../.. && pnpm install` |
 | Build Command | `next build` (default) |
 
+> Si Root Directory queda en la raíz del repo, Vercel no encuentra `next` en el `package.json` raíz y falla con *"No Next.js version detected"*. El `vercel.json` en `apps/web/` aplica estos valores automáticamente cuando el Root Directory es correcto.
+
 **Variable de entorno obligatoria:**
 
 ```
 NEXT_PUBLIC_API_URL=https://tu-api-en-produccion.com
 ```
-
-Alternativa: usar el [`vercel.json`](./vercel.json) en la raíz del monorepo (build desde root).
 
 Guía completa: [docs/INTEGRATION.md](./docs/INTEGRATION.md#9-despliegue-del-frontend-vercel)
 

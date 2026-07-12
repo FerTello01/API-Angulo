@@ -1,14 +1,18 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
-import { buttonVariants } from '@/components/ui/button'
 import { FilePlus, ShieldCheck, BookOpen, ExternalLink } from 'lucide-react'
 import { getOpenApiDocsUrl } from '@/lib/api-client'
 import { getTrackedCertificateIds } from '@/lib/certificate-store'
 
 export default function AdminDashboardPage() {
-  const trackedCount = typeof window !== 'undefined' ? getTrackedCertificateIds().length : 0
+  const [trackedCount, setTrackedCount] = useState(0)
+
+  useEffect(() => {
+    setTrackedCount(getTrackedCertificateIds().length)
+  }, [])
 
   return (
     <div className="space-y-8">

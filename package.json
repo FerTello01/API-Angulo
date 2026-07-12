@@ -2,6 +2,7 @@
   "name": "proofact",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@11.12.0",
   "description": "Proofact — Impact Certification Platform (API + Web)",
   "scripts": {
     "dev": "pnpm --filter @proofact/api --filter @proofact/web --parallel dev",

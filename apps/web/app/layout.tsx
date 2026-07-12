@@ -40,8 +40,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${manrope.variable} ${ibmPlexMono.variable} bg-background`}>
-      <body className="antialiased font-sans">
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={`${inter.variable} ${manrope.variable} ${ibmPlexMono.variable} bg-background`}
+    >
+      <body suppressHydrationWarning className="antialiased font-sans">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

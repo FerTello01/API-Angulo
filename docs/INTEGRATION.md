@@ -409,9 +409,9 @@ Antes de ir a producción, verifica:
 
 ## 9. Despliegue del frontend (Vercel)
 
-El frontend Proofact vive en `apps/web/`. Vercel debe apuntar ahí.
+El frontend Proofact vive en `apps/web/`. Vercel **debe** usar ese directorio como raíz del proyecto.
 
-### Opción A — Root Directory (recomendada)
+### Configuración en Vercel
 
 En **Vercel → Project Settings → General → Root Directory**:
 
@@ -419,20 +419,15 @@ En **Vercel → Project Settings → General → Root Directory**:
 apps/web
 ```
 
-Build Command (auto): `next build`  
-Install Command: `cd ../.. && pnpm install`
+| Campo | Valor |
+|---|---|
+| Root Directory | `apps/web` |
+| Install Command | `cd ../.. && pnpm install` |
+| Build Command | `next build` |
 
-### Opción B — Desde raíz del monorepo
+El archivo [`apps/web/vercel.json`](../apps/web/vercel.json) define estos comandos. Si Root Directory queda en la raíz del repo, el build falla con *"No Next.js version detected"* porque `next` solo está en `apps/web/package.json`.
 
-El repo incluye [`vercel.json`](../vercel.json) en la raíz:
-
-```json
-{
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @proofact/web build",
-  "outputDirectory": "apps/web/.next"
-}
-```
+> **No** dejes un `pnpm-lock.yaml` dentro de `apps/web/` — usa solo el lockfile del monorepo en la raíz.
 
 ### Variables de entorno en Vercel (web)
 

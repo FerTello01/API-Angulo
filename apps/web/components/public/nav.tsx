@@ -178,7 +178,7 @@ export function PublicFooter() {
           </div>
         </div>
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 sm:flex-row">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground" suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Proofact. Todos los derechos reservados.
           </p>
           <p className="text-xs text-muted-foreground">
