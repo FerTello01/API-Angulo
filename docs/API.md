@@ -1,4 +1,4 @@
-# Documentación de la API — Impact Certification Service
+# Documentación de la API — Proofact Impact Certification Service
 
 API REST corporativa (B2B SaaS) para certificar impacto ambiental y social de empresas tradicionales, con attestations inmutables en **Base** mediante **EAS** y capa virtual **EVVM**.
 
@@ -11,7 +11,9 @@ API REST corporativa (B2B SaaS) para certificar impacto ambiental y social de em
 | Campo | Valor |
 |---|---|
 | **Base URL (dev)** | `http://localhost:3000` |
-| **Base URL (prod)** | Configurar según despliegue |
+| **Guía interactiva (web)** | `http://localhost:3001/developers` |
+| **OpenAPI (Scalar)** | `http://localhost:3000/docs` |
+| **Spec JSON** | `http://localhost:3000/openapi.json` |
 | **Versión** | `v1` |
 | **Formato** | JSON (`Content-Type: application/json`) |
 | **Host chain** | [Base](https://docs.base.org) (Sepolia `84532` / Mainnet `8453`) |
@@ -26,6 +28,7 @@ El cliente corporativo **no interactúa con Web3**: no maneja llaves privadas, n
 
 ## Tabla de contenidos
 
+- [Guía de implementación](./INTEGRATION.md) — **empezar aquí**
 - [Endpoints](#endpoints)
 - [Infraestructura on-chain](#infraestructura-on-chain)
 - [Configuración previa](#configuración-previa)
@@ -102,12 +105,12 @@ Blockchain virtual sobre Base para flujo gasless vía fishers. Ver [EVVM.md](./E
 Antes de consumir la API en un entorno real:
 
 ```bash
-cp .env.example .env
+cp apps/api/.env.example apps/api/.env
 # Configurar RELAYER_PRIVATE_KEY
 
-npm run register-schema      # Obtener EAS_IMPACT_SCHEMA_UID
-npm run check-deployment     # Validar fondos, EAS y schema
-npm run dev                  # Iniciar servidor
+pnpm --filter @proofact/api register-schema   # Obtener EAS_IMPACT_SCHEMA_UID
+pnpm --filter @proofact/api check-deployment  # Validar fondos, EAS y schema
+pnpm dev                                     # API :3000 + Web :3001
 ```
 
 | Requisito | Descripción |
@@ -150,7 +153,7 @@ Authorization: Bearer <api_key>
 
 ## EAS — Attestations on-chain
 
-API Angulo utiliza **[Ethereum Attestation Service (EAS)](https://docs.attest.org/docs/welcome)** para registrar certificaciones de impacto como attestations verificables en **Base**.
+API Proofact utiliza **[Ethereum Attestation Service (EAS)](https://docs.attest.org/docs/welcome)** para registrar certificaciones de impacto como attestations verificables en **Base**.
 
 ### ¿Qué es una attestation?
 
@@ -191,7 +194,7 @@ POST /issue → IPFS (CID) → eas.attest() → attestationUID → GET /:id (CON
 | **EVVM** | Blockchain virtual — sin infraestructura propia |
 | **EAS** | Attestations de impacto (predeploy en Base) |
 | **Fishers** | Ejecutan transacciones; el cliente B2B no paga gas |
-| **API Angulo** | Abstrae todo el flujo Web3 vía REST |
+| **API Proofact** | Abstrae todo el flujo Web3 vía REST |
 
 El cliente corporativo **nunca interactúa con EVVM** directamente.
 
@@ -214,7 +217,7 @@ GET /health
 ```json
 {
   "status": "ok",
-  "service": "impact-certification-api",
+  "service": "proofact-impact-certification-api",
   "timestamp": "2026-07-12T08:00:00.000Z"
 }
 ```
@@ -688,7 +691,9 @@ keccak256(abi.encodePacked(
 | `POST /api/v1/certificates/:id/revoke` | Planificado |
 | `GET /api/v1/attestations/:uid/verify` | Planificado |
 | `POST /api/v1/webhooks` | Planificado |
-| `GET /docs` (OpenAPI) | Planificado |
+| `GET /docs` (OpenAPI Scalar) | **Implementado** — `http://localhost:3000/docs` |
+| `GET /openapi.json` | **Implementado** |
+| Guía web `/developers` | **Implementado** — `http://localhost:3001/developers` |
 
 ---
 
@@ -696,6 +701,7 @@ keccak256(abi.encodePacked(
 
 | Documento | Contenido |
 |---|---|
+| [Guía web /developers](http://localhost:3001/developers) | Documentación narrativa Proofact |
 | [DEPLOY-BASE.md](./DEPLOY-BASE.md) | Despliegue Base + EVVM + EAS |
 | [EAS.md](./EAS.md) | Integración técnica EAS |
 | [EVVM.md](./EVVM.md) | Despliegue EVVM sobre Base |

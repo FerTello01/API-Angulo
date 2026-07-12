@@ -28,6 +28,8 @@ const envSchema = z.object({
   TX_CONFIRMATIONS: z.coerce.number().int().min(1).default(1),
   TX_TIMEOUT_MS: z.coerce.number().int().min(5_000).default(120_000),
   TX_MAX_RETRIES: z.coerce.number().int().min(0).max(10).default(3),
+
+  WEB_APP_URL: z.string().url().default('http://localhost:3001'),
 });
 
 export type Env = z.infer<typeof envSchema>;

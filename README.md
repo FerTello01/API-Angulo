@@ -1,24 +1,26 @@
-# API Angulo — Servicio de Certificación de Impacto
+# Proofact — Plataforma de Certificación de Impacto
 
-API REST corporativa (B2B SaaS) para certificar el impacto ambiental y social de empresas tradicionales, desplegada en **Base** con **EVVM** + **EAS**.
+Monorepo con **frontend Proofact** (Next.js) y **API REST B2B** (Fastify) para certificar impacto ambiental y social con attestations EAS verificables en **Base**.
 
-El cliente final **no interactúa con Web3**: no maneja llaves privadas, no firma transacciones y no paga gas. La plataforma actúa como **Relayer operacional**.
+El cliente corporativo **no interactúa con Web3**: no maneja llaves privadas, no firma transacciones y no paga gas. Proofact actúa como **relayer operacional**.
 
 ## Stack
 
 | Capa | Tecnología |
 |---|---|
-| API | Fastify + TypeScript |
+| Frontend | Next.js 16 + React 19 + shadcn/ui + Tailwind 4 |
+| API | Fastify 5 + TypeScript + OpenAPI 3.1 + Scalar |
 | Host chain | **Base** (Sepolia / Mainnet) |
 | Virtual chain | **EVVM** sobre Base |
 | Attestations | **EAS** (predeploy OP Stack) |
 | Web3 | Viem + relayer wallet |
-| Evidencia | IPFS (mock → producción) |
 
 ## Arquitectura
 
 ```
-Cliente B2B → Fastify API → IPFS → Relayer → EAS.attest() → Base (+ EVVM)
+Cliente B2B → Proofact API → IPFS → Relayer → EAS.attest() → Base (+ EVVM)
+                    ↑
+              Proofact Web (/developers, /verify, /admin)
 ```
 
 ## Inicio rápido
@@ -26,29 +28,42 @@ Cliente B2B → Fastify API → IPFS → Relayer → EAS.attest() → Base (+ EV
 ```bash
 git clone https://github.com/FerTello01/API-Angulo.git
 cd API-Angulo
-npm install
-cp .env.example .env
-# Editar RELAYER_PRIVATE_KEY
+pnpm install
 
-npm run register-schema    # Registrar schema EAS en Base
-npm run check-deployment   # Validar configuración
-npm run dev                # Iniciar API
+# API
+cp apps/api/.env.example apps/api/.env
+# Editar RELAYER_PRIVATE_KEY en apps/api/.env
+
+# Web
+cp apps/web/.env.example apps/web/.env.local
+
+pnpm dev:api    # API en http://localhost:3000
+pnpm dev:web    # Web en http://localhost:3001
+pnpm dev        # Ambos en paralelo
 ```
 
-## Guía de despliegue completa
+## URLs de desarrollo
 
-**[docs/DEPLOY-BASE.md](./docs/DEPLOY-BASE.md)** — paso a paso: Base + EVVM + EAS
+| URL | Descripción |
+|---|---|
+| http://localhost:3001 | Frontend Proofact |
+| http://localhost:3001/developers | Guía de integración API |
+| http://localhost:3001/admin | Panel de gestión |
+| http://localhost:3001/verify | Verificar certificados |
+| http://localhost:3000/docs | Referencia interactiva OpenAPI (Scalar) |
+| http://localhost:3000/openapi.json | Spec OpenAPI 3.1 |
 
 ## Documentación
 
 | Documento | Descripción |
 |---|---|
-| [DEPLOY-BASE.md](./docs/DEPLOY-BASE.md) | Guía de despliegue completa |
-| [API.md](./docs/API.md) | Referencia REST API |
+| **[INTEGRATION.md](./docs/INTEGRATION.md)** | **Guía definitiva de implementación** |
+| [API.md](./docs/API.md) | Referencia técnica REST |
+| [DEPLOY-BASE.md](./docs/DEPLOY-BASE.md) | Despliegue Base + EVVM + EAS |
 | [EAS.md](./docs/EAS.md) | Integración EAS |
 | [EVVM.md](./docs/EVVM.md) | EVVM sobre Base |
 
-## Endpoints
+## Endpoints API (v1)
 
 | Método | Endpoint | Descripción |
 |---|---|---|
@@ -56,44 +71,49 @@ npm run dev                # Iniciar API
 | `POST` | `/api/v1/certificates/issue` | Emitir certificado |
 | `GET` | `/api/v1/certificates/:id` | Consultar estado |
 
-## Variables de entorno clave
+## Estructura del monorepo
 
-```bash
-BASE_NETWORK=sepolia
-RELAYER_PRIVATE_KEY=0x...
-EAS_IMPACT_SCHEMA_UID=0x...        # npm run register-schema
-EVVM_CORE_ADDRESS=0x...            # tras deploy EVVM
-EVVM_STAKING_ADDRESS=0x...
 ```
-
-EAS predeployado en Base (no requiere deploy manual):
-- EAS: `0x4200000000000000000000000000000000000021`
-- SchemaRegistry: `0x4200000000000000000000000000000000000020`
+/
+├── apps/
+│   ├── api/          # Fastify API + OpenAPI + Scalar
+│   └── web/          # Next.js Proofact (docs, verify, admin)
+├── docs/             # Guías técnicas (Markdown)
+├── package.json      # Workspace root
+└── pnpm-workspace.yaml
+```
 
 ## Scripts
 
 | Comando | Descripción |
 |---|---|
-| `npm run dev` | Desarrollo con hot-reload |
-| `npm run register-schema` | Registrar schema EAS en Base |
-| `npm run check-deployment` | Validar readiness |
-| `npm run build` | Compilar TypeScript |
-| `npm start` | Producción |
+| `pnpm dev` | API + Web en paralelo |
+| `pnpm dev:api` | Solo API (puerto 3000) |
+| `pnpm dev:web` | Solo Web (puerto 3001) |
+| `pnpm --filter @proofact/api register-schema` | Registrar schema EAS |
+| `pnpm --filter @proofact/api check-deployment` | Validar readiness |
 
-## Estructura
+## Despliegue en Vercel (frontend)
+
+El build falla si Vercel busca `app/` en la raíz del repo. El frontend está en `apps/web/`.
+
+**Configuración recomendada** en Vercel → Project Settings → General:
+
+| Campo | Valor |
+|---|---|
+| Root Directory | `apps/web` |
+| Install Command | `cd ../.. && pnpm install` |
+| Build Command | `next build` (default) |
+
+**Variable de entorno obligatoria:**
 
 ```
-API-Angulo/
-├── contracts/          # Solidity (legacy + EVVM service)
-├── deploy/             # Plantillas EVVM
-├── docs/               # Documentación
-├── scripts/            # register-schema, check-deployment
-├── src/
-│   ├── chains/base.ts  # Base + EAS addresses
-│   ├── web3/           # EAS attestation worker
-│   └── ...
-└── package.json
+NEXT_PUBLIC_API_URL=https://tu-api-en-produccion.com
 ```
+
+Alternativa: usar el [`vercel.json`](./vercel.json) en la raíz del monorepo (build desde root).
+
+Guía completa: [docs/INTEGRATION.md](./docs/INTEGRATION.md#9-despliegue-del-frontend-vercel)
 
 ## Licencia
 

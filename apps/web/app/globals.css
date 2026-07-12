@@ -1,0 +1,181 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── Tailwind v4 theme ───────────────────────────────────────────────────── */
+@theme inline {
+
+  /* Fonts */
+  --font-sans:    var(--font-inter),    ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-manrope),  ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    var(--font-ibm-plex-mono), ui-monospace, 'Courier New', monospace;
+
+  /* Semantic color tokens → resolved at :root */
+  --color-background:         var(--background);
+  --color-foreground:         var(--foreground);
+  --color-card:               var(--card);
+  --color-card-foreground:    var(--card-foreground);
+  --color-popover:            var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary:            var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary:          var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:              var(--muted);
+  --color-muted-foreground:   var(--muted-foreground);
+  --color-accent:             var(--accent);
+  --color-accent-foreground:  var(--accent-foreground);
+  --color-destructive:        var(--destructive);
+  --color-border:             var(--border);
+  --color-input:              var(--input);
+  --color-ring:               var(--ring);
+
+  /* Brand palette */
+  --color-brand-green:        var(--brand-green);
+  --color-brand-green-light:  var(--brand-green-light);
+  --color-brand-blue:         var(--brand-blue);
+  --color-brand-blue-light:   var(--brand-blue-light);
+  --color-brand-lime:         var(--brand-lime);
+  --color-brand-lime-light:   var(--brand-lime-light);
+  --color-brand-amber:        var(--brand-amber);
+  --color-brand-amber-light:  var(--brand-amber-light);
+  --color-brand-sand:         var(--brand-sand);
+  --color-brand-clay:         var(--brand-clay);
+
+  /* Sidebar */
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Border radius scale */
+  --radius-sm:  calc(var(--radius) * 0.6);
+  --radius-md:  calc(var(--radius) * 0.8);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 2.5);
+}
+
+/* ── Design tokens (light mode) ──────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  /* Base — usando los hex exactos del brand guide */
+  --background:         #F3EFE7;   /* Warm Sand */
+  --foreground:         #14221F;   /* Ink Navy */
+
+  --card:               #FFFFFF;
+  --card-foreground:    #14221F;
+
+  --popover:            #FFFFFF;
+  --popover-foreground: #14221F;
+
+  /* Primary = Proof Green */
+  --primary:            #2D7A5E;
+  --primary-foreground: #FFFFFF;
+
+  /* Secondary = Soft Gray */
+  --secondary:          #E8E4DC;
+  --secondary-foreground: #14221F;
+
+  --muted:              #E8E4DC;
+  --muted-foreground:   #4A4F55;
+
+  --accent:             #EBF5F1;
+  --accent-foreground:  #2D7A5E;
+
+  --destructive:        #C0392B;
+
+  --border:             #D8D3CB;
+  --input:              #D8D3CB;
+  --ring:               #2D7A5E;
+
+  --radius: 0.5rem;
+
+  /* ─── Proofact brand palette (hex exactos del brand guide) ─── */
+  --brand-navy:         #14221F;   /* Ink Navy     — tipografía, sidebars, headers */
+  --brand-green:        #2D7A5E;   /* Proof Green  — acciones primarias, impacto verificado */
+  --brand-blue:         #4B78D1;   /* Evidence Blue — datos, gráficas, validación */
+  --brand-lime:         #B9E769;   /* Signal Lime  — acento, éxito, highlights (solo acento) */
+  --brand-clay:         #D9A879;   /* Soft Clay    — territorio, comunidad, etiquetas */
+  --brand-amber:        #E5A93D;   /* Alert Amber  — pendientes, revisión, advertencias */
+  --brand-sand:         #F3EFE7;   /* Warm Sand    — fondo principal, superficies suaves */
+  /* Neutros */
+  --brand-white:        #FFFFFF;
+  --brand-soft-gray:    #E8E4DC;   /* Superficies secundarias, tablas */
+  --brand-mid-gray:     #B7B1A6;   /* Texto secundario, iconos, ayuda */
+  --brand-dark-gray:    #4A4F55;   /* Texto secundario oscuro, énfasis suave */
+  /* Tints */
+  --brand-green-light:  #EBF5F1;
+  --brand-blue-light:   #EBF0FB;
+  --brand-lime-light:   #F5FBE3;
+  --brand-amber-light:  #FDF4E1;
+  --brand-clay-light:   #FBF3E9;
+
+  /* Charts */
+  --chart-1: #2D7A5E;  /* Proof Green */
+  --chart-2: #4B78D1;  /* Evidence Blue */
+  --chart-3: #B9E769;  /* Signal Lime */
+  --chart-4: #E5A93D;  /* Alert Amber */
+  --chart-5: #D9A879;  /* Soft Clay */
+
+  /* Sidebar — Ink Navy oscuro, autoridad visual */
+  --sidebar:                    #14221F;
+  --sidebar-foreground:         #E8E4DC;
+  --sidebar-primary:            #B9E769;   /* Signal Lime como acento activo */
+  --sidebar-primary-foreground: #14221F;
+  --sidebar-accent:             #1F3530;   /* navy ligeramente más claro */
+  --sidebar-accent-foreground:  #F3EFE7;
+  --sidebar-border:             #2A3F39;
+  --sidebar-ring:               #2D7A5E;
+}
+
+/* ── Base layer ──────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border box-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold leading-tight tracking-tight;
+  }
+  code, pre, kbd, samp {
+    @apply font-mono;
+  }
+}
+
+/* ── Status utilities ────────────────────────────────────────────────────── */
+@layer utilities {
+  .status-verified {
+    @apply bg-brand-lime-light text-[oklch(0.30_0.14_130)] border border-[oklch(0.80_0.17_130)/40];
+  }
+  .status-pending {
+    @apply bg-brand-amber-light text-[oklch(0.38_0.14_72)] border border-[oklch(0.73_0.16_72)/40];
+  }
+  .status-review {
+    @apply bg-brand-blue-light text-[oklch(0.28_0.14_247)] border border-[oklch(0.50_0.16_247)/40];
+  }
+  .status-draft {
+    @apply bg-muted text-muted-foreground border border-border;
+  }
+  .status-rejected {
+    @apply bg-[oklch(0.96_0.02_25)] text-[oklch(0.42_0.18_27)] border border-[oklch(0.57_0.22_27)/30];
+  }
+}

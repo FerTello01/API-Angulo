@@ -1,0 +1,10 @@
+packages:
+  - 'apps/*'
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  msw: true
+
+overrides:
+  hono: 4.12.25
