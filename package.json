@@ -11,11 +11,15 @@
     "build": "pnpm run --parallel build:api build:web",
     "build:api": "pnpm --filter @proofact/api build",
     "build:web": "pnpm --filter @proofact/web build",
+    "vercel-build": "pnpm --filter @proofact/web build",
     "start:api": "pnpm --filter @proofact/api start",
     "start:web": "pnpm --filter @proofact/web start",
     "typecheck": "pnpm run --parallel typecheck:api typecheck:web",
     "typecheck:api": "pnpm --filter @proofact/api typecheck",
     "typecheck:web": "pnpm --filter @proofact/web typecheck"
+  },
+  "dependencies": {
+    "next": "16.2.6"
   },
   "engines": {
     "node": ">=20.0.0"
