@@ -1,48 +1,44 @@
-# Despliegue de EVVM — API Angulo
+# EVVM sobre Base — API Angulo
 
-**[EVVM (Ethereum Virtual Virtual Machine)](https://www.evvm.info/docs/intro)** es una blockchain virtual que se despliega sobre una red host EVM existente (como Gravity), sin necesidad de gestionar validadores ni infraestructura propia.
+**[EVVM (Ethereum Virtual Virtual Machine)](https://www.evvm.info/docs/intro)** es una blockchain virtual desplegada sobre una red host EVM — en nuestro caso, **Base** — sin gestionar validadores ni infraestructura propia.
 
-API Angulo utiliza EVVM como capa de ejecución virtual sobre Gravity, combinada con **EAS** para attestations de impacto corporativo.
+API Angulo usa EVVM como capa de ejecución virtual opcional, combinada con **EAS** para attestations de impacto corporativo.
 
 ## ¿EVVM es compatible con EAS?
 
-**Sí.** Ambos son 100% compatibles con EVM:
+**Sí.** Ambos son EVM nativos:
 
-| Protocolo | Compatibilidad | Razón |
-|---|---|---|
-| **EVVM** | EVM nativo | Despliega contratos Solidity sobre cualquier host chain EVM |
-| **EAS** | EVM nativo | [`eas-contracts`](https://github.com/ethereum-attestation-service/eas-contracts) desplegable en cualquier red EVM |
-
-EVVM no reemplaza a EAS — lo complementa:
+| Protocolo | Compatibilidad |
+|---|---|
+| **EVVM** | Contratos Solidity sobre cualquier host EVM |
+| **EAS** | Predeployado en Base (OP Stack) |
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Gravity (Host Chain)                      │
+│                      Base (Host Chain)                       │
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │              EVVM (Virtual Blockchain)               │    │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐ │    │
-│  │  │  EAS.sol     │  │ SchemaRegistry│  │ Relayer  │ │    │
-│  │  │  attestations│  │  schemas     │  │ Service  │ │    │
+│  │  │  EAS (host)  │  │ EVVM Core    │  │ Fishers  │ │    │
+│  │  │  attestations│  │ + Staking    │  │ gasless  │ │    │
 │  │  └──────────────┘  └──────────────┘  └──────────┘ │    │
-│  │         ▲ Fishers ejecutan transacciones gasless     │    │
 │  └─────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
          ▲
-         │ API Angulo (Fastify + Viem + EAS SDK)
-         │ Relayer firma attestations / Fishers ejecutan
+         │ API Angulo (Fastify + Viem)
 ```
 
-### Ventajas de EVVM + EAS para API Angulo
+### Ventajas EVVM + EAS + Base
 
 | Beneficio | Descripción |
 |---|---|
-| **Gasless para clientes B2B** | Los fishers ejecutan transacciones; el cliente corporativo no paga gas |
-| **Blockchain propia sin infra** | Instancia EVVM dedicada a certificaciones de impacto |
-| **Attestations estándar EAS** | Interoperables con ecosistema Ethereum |
-| **Seguridad heredada** | Gravity como host chain aporta finalidad y seguridad |
-| **Escalabilidad vertical** | Múltiples EVVMs sobre la misma red Gravity |
+| **Gasless B2B** | Fishers ejecutan tx; cliente corporativo no paga gas |
+| **Sin infra propia** | Blockchain virtual sobre Base |
+| **EAS estándar** | Attestations interoperables |
+| **Bajo costo** | Base L2 + finalidad rápida |
+| **Corporate-friendly** | Coinbase ecosystem |
 
-## Arquitectura API Angulo con EVVM
+## Arquitectura
 
 ```
 Cliente B2B (REST, sin Web3)
@@ -50,27 +46,27 @@ Cliente B2B (REST, sin Web3)
        ▼
 ┌──────────────────┐     IPFS           ┌─────────────┐
 │  Fastify API     │ ─────────────────► │  IPFS CID   │
-│  POST /issue     │                    └─────────────┘
-└────────┬─────────┘
-         │ async
+└────────┬─────────┘                    └─────────────┘
+         │
          ▼
-┌──────────────────┐   EAS SDK          ┌──────────────────────────────┐
-│  Web3 Relayer    │ ─────────────────► │  EAS.sol (dentro de EVVM)    │
-│  + Fisher        │   eas.attest()     │  Schema: ImpactCertification │
+┌──────────────────┐   eas.attest()     ┌──────────────────────────────┐
+│  Relayer/Fisher  │ ─────────────────► │  EAS (predeploy en Base)     │
 └──────────────────┘                    └──────────────────────────────┘
                                                     │
-                                          EVVM sobre Gravity (host)
+                                          EVVM sobre Base (host)
 ```
+
+> **Nota:** La implementación actual usa EAS directamente en Base. La integración EVVM gasless es el siguiente paso del roadmap.
 
 ## Prerrequisitos
 
-| Herramienta | Versión | Instalación |
-|---|---|---|
-| [Foundry](https://book.getfoundry.sh/getting-started/installation) | latest | `curl -L https://foundry.paradigm.xyz \| bash && foundryup` |
-| [Bun](https://bun.sh) | ≥ 1.0 | `curl -fsSL https://bun.sh/install \| bash` |
-| Git | latest | — |
+| Herramienta | Instalación |
+|---|---|
+| [Foundry](https://book.getfoundry.sh/getting-started/installation) | `curl -L https://foundry.paradigm.xyz \| bash && foundryup` |
+| [Bun](https://bun.sh) ≥ 1.0 | `curl -fsSL https://bun.sh/install \| bash` |
+| Git | — |
 
-> **Windows:** Usar WSL2 o [EVVM Docker](https://github.com/EVVM-org/evvm-docker).
+> Windows: WSL2 o [EVVM Docker](https://github.com/EVVM-org/evvm-docker)
 
 ## Paso 1 — Clonar EVVM CLI
 
@@ -82,281 +78,165 @@ bun install
 
 Referencia: [EVVM QuickStart](https://www.evvm.info/docs/QuickStart)
 
-## Paso 2 — Configurar entorno para Gravity
+## Paso 2 — Configurar Base como host
 
 ```bash
 cp .env.example .env
 ```
 
-Edita `.env` apuntando a Gravity como host chain:
-
 ```bash
-# Gravity como host chain
-# Mainnet L1 (producción)
-RPC_URL="https://mainnet-rpc.gravity.xyz"
+# Base Sepolia (testing)
+RPC_URL="https://sepolia.base.org"
 
-# Testnet (desarrollo)
-# RPC_URL="https://rpc-sepolia.gravity.xyz"
+# Base Mainnet (producción)
+# RPC_URL="https://mainnet.base.org"
 
-# Registro EVVM (siempre en Ethereum Sepolia)
+# EVVM Registry (siempre Ethereum Sepolia)
 EVVM_REGISTRATION_RPC_URL="https://gateway.tenderly.co/public/sepolia"
 
-# Verificación de contratos (Sourcify recomendado para Gravity)
-# ETHERSCAN_API="your_api_key"
+# Verificación — Etherscan v2 (BaseScan)
+ETHERSCAN_API="tu_basescan_api_key"
 ```
 
-### Verificar conectividad con Gravity
+Plantilla del proyecto: `deploy/evvm.env.example`
+
+### Verificar conectividad
 
 ```bash
-curl -s https://mainnet-rpc.gravity.xyz \
+curl -s https://sepolia.base.org \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
-# Esperado: {"result":"0x1f0b9"} → chain ID 127001
+# Resultado: 0x14a34 → chain ID 84532
 ```
 
 ## Paso 3 — Importar wallet
 
 ```bash
-cast wallet import defaultKey --interactive
+cast wallet import deployer --interactive
+cast wallet address deployer
 ```
 
-> **Nunca** guardes llaves privadas en `.env`. Usa el keystore encriptado de Foundry.
+Fondos necesarios:
+- **ETH en Base Sepolia** — deploy EVVM + gas EAS
+- **ETH en Ethereum Sepolia** — registro EVVM Registry
 
-La wallet necesita saldo en **G** (Gravity) para el despliegue y en **ETH Sepolia** para el registro en EVVM Registry.
+Faucets:
+- [Base Sepolia](https://www.alchemy.com/faucets/base-sepolia)
+- [Sepolia](https://sepoliafaucet.com)
 
 ## Paso 4 — Desplegar EVVM
 
 ```bash
 chmod +x evvm
-./evvm deploy --walletName defaultKey
+./evvm deploy --walletName deployer
 ```
 
-El wizard interactivo solicitará:
+### Configuración recomendada API Angulo
 
-### Direcciones de administrador (requeridas)
-
-| Rol | Descripción | Recomendación API Angulo |
-|---|---|---|
-| `admin` | Administrador del contrato EVVM | Wallet del equipo |
-| `goldenFisher` | Cuenta sudo para staking privilegiado | Wallet del relayer |
-| `activator` | Gestiona activación de epochs | Wallet del relayer |
-
-### Configuración de token
-
-```text
-EVVM Name:        API Angulo EVVM
-Principal Token:  Impact Token
-Symbol:           IMPACT
-```
-
-### Verificación en block explorer
-
-Selecciona **Sourcify** (Gravity no tiene Etherscan nativo):
-
-```text
-Select block explorer verification:
-  Sourcify    ← Recomendado para Gravity
-```
+| Campo | Valor |
+|---|---|
+| EVVM Name | `API Angulo EVVM` |
+| Token Name | `Impact Token` |
+| Symbol | `IMPACT` |
+| admin | Wallet del equipo |
+| goldenFisher | Dirección del relayer |
+| activator | Dirección del relayer |
+| Verificación | **Etherscan v2** |
 
 ### Contratos desplegados
 
-Al finalizar verás 6 contratos core:
-
-| Contrato | Propósito | Uso en API Angulo |
-|---|---|---|
-| `Evvm` | Lógica core de la VM virtual | Pagos y nonces |
-| `Staking` | Staking y recompensas | Staking del relayer/fishers |
-| `Estimator` | Cálculo de recompensas | — |
-| `NameService` | Sistema de nombres | Identidad del servicio |
-| `Treasury` | Gestión de activos | Fondo operacional |
-| `P2PSwap` | Intercambio P2P de tokens | — |
-
-Guarda las direcciones en `output/evvmDeployment.json`.
+| Contrato | Propósito |
+|---|---|
+| `Evvm` | Core VM virtual |
+| `Staking` | Staking y recompensas |
+| `Estimator` | Cálculo de recompensas |
+| `NameService` | Identidad del servicio |
+| `Treasury` | Fondo operacional |
+| `P2PSwap` | Intercambio P2P |
 
 ## Paso 5 — Registrar en EVVM Registry
 
-El registro se hace **siempre en Ethereum Sepolia**, independientemente del host chain.
-
 ```bash
-./evvm register --evvmAddress 0x<TU_EVVM_ADDRESS> --walletName defaultKey
+./evvm register --evvmAddress 0x<TU_EVVM> --walletName deployer
 ```
 
-O durante el deploy, responde `y` cuando pregunte:
+> Registro en **Ethereum Sepolia** — siempre, independiente del host chain.
 
-```text
-Do you want to register the EVVM instance now? (y/n): y
-```
+Registry: `0x389dC8fb09211bbDA841D59f4a51160dA2377832`
 
-Recibirás un **EVVM ID ≥ 1000** permanente.
-
-### Verificar registro
+### Verificar
 
 ```bash
-# Metadata del EVVM ID (Ethereum Sepolia)
 cast call 0x389dC8fb09211bbDA841D59f4a51160dA2377832 \
   "getEvvmIdMetadata(uint256)" <EVVM_ID> \
   --rpc-url https://gateway.tenderly.co/public/sepolia
 
-# ID en tu contrato EVVM (Gravity)
 cast call <EVVM_ADDRESS> "getEvvmID()" \
-  --rpc-url https://mainnet-rpc.gravity.xyz
+  --rpc-url https://sepolia.base.org
 ```
 
-Registry: [Etherscan Sepolia](https://sepolia.etherscan.io/address/0x389dC8fb09211bbDA841D59f4a51160dA2377832)
-
-## Paso 6 — Desplegar EAS sobre tu EVVM
-
-Una vez desplegada la instancia EVVM, despliega los contratos EAS en la misma red (Gravity):
+## Paso 6 — Configurar API Angulo
 
 ```bash
-git clone https://github.com/ethereum-attestation-service/eas-contracts
-cd eas-contracts
-
-# Desplegar EAS + SchemaRegistry en Gravity
-forge script script/Deploy.ts \
-  --rpc-url https://mainnet-rpc.gravity.xyz \
-  --broadcast \
-  --private-key $DEPLOYER_KEY
-```
-
-### Registrar Schema de Impacto
-
-```bash
-# Schema para certificaciones corporativas
-SCHEMA="string companyTaxId,string impactCategory,uint256 amount,string ipfsEvidence"
-
-cast send $SCHEMA_REGISTRY_ADDRESS \
-  "register(string,address,bool)" \
-  "$SCHEMA" \
-  "0x0000000000000000000000000000000000000000" \
-  true \
-  --rpc-url https://mainnet-rpc.gravity.xyz \
-  --private-key $DEPLOYER_KEY
-```
-
-### Configurar API Angulo
-
-Actualiza tu `.env` del proyecto API Angulo:
-
-```bash
-# EVVM
 EVVM_CORE_ADDRESS=0x...
 EVVM_STAKING_ADDRESS=0x...
 EVVM_ID=1001
-
-# EAS (desplegado sobre EVVM/Gravity)
-EAS_CONTRACT_ADDRESS=0x...
-EAS_SCHEMA_REGISTRY_ADDRESS=0x...
-EAS_IMPACT_SCHEMA_UID=0x...
-
-# Gravity host chain
-GRAVITY_NETWORK=mainnet
-GRAVITY_RPC_URL=https://mainnet-rpc.gravity.xyz
-RELAYER_PRIVATE_KEY=0x...
 ```
 
-## Paso 7 — Crear servicio EVVM para attestations (opcional)
+## EAS en Base (no requiere deploy)
 
-Para habilitar attestations **gasless** vía fishers, crea un servicio EVVM que envuelva EAS:
+EAS ya está predeployado. Solo registrar schema:
+
+```bash
+cd API-Angulo
+npm run register-schema
+```
+
+| Contrato | Dirección |
+|---|---|
+| EAS | `0x4200000000000000000000000000000000000021` |
+| SchemaRegistry | `0x4200000000000000000000000000000000000020` |
+
+## Servicio EVVM gasless (roadmap)
+
+Para attestations sin gas del cliente, crear un servicio EVVM que envuelva EAS:
 
 ```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
-
 import {EvvmService} from "@evvm/testnet-contracts/library/EvvmService.sol";
-import {IEAS} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 
 contract ImpactAttestationService is EvvmService {
-    IEAS public eas;
-    bytes32 public impactSchemaUID;
-
-    constructor(
-        address _coreAddress,
-        address _stakingAddress,
-        address _easAddress,
-        bytes32 _schemaUID
-    ) EvvmService(_coreAddress, _stakingAddress) {
-        eas = IEAS(_easAddress);
-        impactSchemaUID = _schemaUID;
-    }
-
-    function attestImpact(
-        address user,
-        bytes calldata encodedData,
-        address senderExecutor,
-        address originExecutor,
-        uint256 nonce,
-        bool isAsyncExec,
-        bytes calldata signature,
-        uint256 priorityFeeEvvm,
-        uint256 nonceEvvm,
-        bool isAsyncExecEvvm,
-        bytes calldata signatureEvvm
-    ) external {
-        core.validateAndConsumeNonce(
-            user,
-            senderExecutor,
-            keccak256(abi.encode("attestImpact", encodedData)),
-            originExecutor,
-            nonce,
-            isAsyncExec,
-            signature
-        );
-
-        // Fisher ejecuta la attestation EAS on-chain
-        eas.attest(
-            IEAS.AttestationRequest({
-                schema: impactSchemaUID,
-                data: IEAS.AttestationRequestData({
-                    recipient: address(0),
-                    expirationTime: 0,
-                    revocable: true,
-                    refUID: bytes32(0),
-                    data: encodedData,
-                    value: 0
-                })
-            })
-        );
-    }
+    // Fisher ejecuta eas.attest() tras validar firma EIP-191 del usuario
 }
 ```
 
-Guía completa de servicios: [How to Create an EVVM Service](https://www.evvm.info/docs/HowToMakeAEVVMService)
+Guía: [How to Create an EVVM Service](https://www.evvm.info/docs/HowToMakeAEVVMService)
 
-## Alternativa: Docker
+## Redes Base
 
-Si prefieres no instalar Foundry/Bun localmente:
+| Entorno | Chain ID | RPC |
+|---|---|---|
+| Base Sepolia | `84532` | `https://sepolia.base.org` |
+| Base Mainnet | `8453` | `https://mainnet.base.org` |
+
+## Docker (alternativa)
 
 ```bash
 git clone https://github.com/EVVM-org/evvm-docker
 cd evvm-docker
-
-echo 'RPC_URL="https://mainnet-rpc.gravity.xyz"' > .env
-
+echo 'RPC_URL="https://sepolia.base.org"' > .env
 docker compose run --rm evvm-cli deploy
 ```
 
-## Redes Gravity para EVVM
-
-| Entorno | Chain ID | RPC | Uso |
-|---|---|---|---|
-| Gravity Mainnet (L1) | `127001` | `https://mainnet-rpc.gravity.xyz` | Producción |
-| Gravity Alpha Sepolia | `13505` | `https://rpc-sepolia.gravity.xyz` | Testing |
-| Gravity Alpha L2 (legacy) | `1625` | `https://rpc.gravity.xyz` | Legacy |
-
-## Checklist de despliegue
+## Checklist
 
 - [ ] Instalar Foundry + Bun
-- [ ] Clonar `evvm-cli` y configurar `RPC_URL` con Gravity
-- [ ] Importar wallet con `cast wallet import`
-- [ ] Fondear wallet con G (Gravity) + ETH (Sepolia para registro)
-- [ ] Ejecutar `./evvm deploy`
-- [ ] Registrar EVVM en Registry (`./evvm register`)
-- [ ] Guardar direcciones de contratos en `.env`
-- [ ] Desplegar EAS (`eas-contracts`) en Gravity
-- [ ] Registrar schema `ImpactCertification`
-- [ ] Configurar variables EAS en API Angulo
-- [ ] (Opcional) Crear `ImpactAttestationService` para flujo gasless
+- [ ] Clonar `evvm-cli`, configurar `RPC_URL` = Base Sepolia
+- [ ] Fondear wallet: ETH Base Sepolia + ETH Sepolia
+- [ ] `./evvm deploy`
+- [ ] `./evvm register`
+- [ ] Copiar direcciones a `.env` de API Angulo
+- [ ] `npm run register-schema` (EAS)
+- [ ] `npm run check-deployment`
 - [ ] Probar `POST /api/v1/certificates/issue`
 
 ## Recursos
@@ -366,8 +246,8 @@ docker compose run --rm evvm-cli deploy
 | EVVM Docs | https://www.evvm.info/docs/intro |
 | EVVM QuickStart | https://www.evvm.info/docs/QuickStart |
 | EVVM Services | https://www.evvm.info/docs/HowToMakeAEVVMService |
-| EVVM CLI (GitHub) | https://github.com/EVVM-org/evvm-cli |
-| EVVM Docker | https://github.com/EVVM-org/evvm-docker |
-| EAS Docs | https://docs.attest.org/docs/welcome |
-| EAS + EVVM (este proyecto) | [EAS.md](./EAS.md) |
-| Gravity Docs | https://docs.gravity.xyz |
+| EVVM CLI | https://github.com/EVVM-org/evvm-cli |
+| Base Docs | https://docs.base.org |
+| EAS en Base | [EAS.md](./EAS.md) |
+| Deploy completo | [DEPLOY-BASE.md](./DEPLOY-BASE.md) |
+| API Reference | [API.md](./API.md) |
