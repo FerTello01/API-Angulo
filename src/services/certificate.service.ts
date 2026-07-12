@@ -93,13 +93,15 @@ async function processOnchainAttestation(
     );
 
     record.status = 'CONFIRMED';
+    record.attestationUID = result.attestationUID;
     record.txHash = result.txHash;
     record.blockNumber = result.blockNumber;
     record.updatedAt = new Date().toISOString();
     record.certificateHash = result.certificateHash;
 
-    console.info('[certificate-service] On-chain attestation confirmed', {
+    console.info('[certificate-service] EAS attestation confirmed', {
       certificateId,
+      attestationUID: result.attestationUID,
       txHash: result.txHash,
     });
   } catch (error) {

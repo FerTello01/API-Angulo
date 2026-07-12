@@ -10,7 +10,7 @@ export async function registerCertificateRoutes(app: FastifyInstance): Promise<v
    * POST /api/v1/certificates/issue
    *
    * Accepts corporate impact data, pins evidence to IPFS (mocked),
-   * and triggers an async on-chain attestation via the Gravity relayer.
+   * and triggers an async EAS attestation on Base via the relayer.
    */
   app.post('/api/v1/certificates/issue', {
     schema: {

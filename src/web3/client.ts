@@ -8,27 +8,27 @@ import {
   type WalletClient,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { defaultRpcUrl, resolveGravityChain } from '../chains/gravity.js';
-import { env, gravityNetwork } from '../config/env.js';
+import { defaultRpcUrl, resolveBaseChain } from '../chains/base.js';
+import { env, baseNetwork } from '../config/env.js';
 
-export interface GravityClients {
+export interface ChainClients {
   chain: Chain;
   account: Account;
   publicClient: PublicClient;
   walletClient: WalletClient;
 }
 
-let cachedClients: GravityClients | null = null;
+let cachedClients: ChainClients | null = null;
 
 /**
- * Builds (or returns cached) viem clients wired to the Gravity network.
+ * Builds (or returns cached) viem clients wired to Base.
  * The operational relayer account signs all on-chain transactions.
  */
-export function getGravityClients(): GravityClients {
+export function getChainClients(): ChainClients {
   if (cachedClients) return cachedClients;
 
-  const chain = resolveGravityChain(gravityNetwork);
-  const rpcUrl = env.GRAVITY_RPC_URL ?? defaultRpcUrl(gravityNetwork);
+  const chain = resolveBaseChain(baseNetwork);
+  const rpcUrl = env.BASE_RPC_URL ?? defaultRpcUrl(baseNetwork);
   const transport = http(rpcUrl, { timeout: env.TX_TIMEOUT_MS });
 
   const account = privateKeyToAccount(env.RELAYER_PRIVATE_KEY as `0x${string}`);
@@ -36,11 +36,17 @@ export function getGravityClients(): GravityClients {
   const publicClient = createPublicClient({ chain, transport });
   const walletClient = createWalletClient({ chain, transport, account });
 
-  cachedClients = { chain, account, publicClient, walletClient };
+  cachedClients = {
+    chain,
+    account,
+    publicClient,
+    walletClient,
+  } as ChainClients;
+
   return cachedClients;
 }
 
 /** Resets the client cache — useful in tests or after config hot-reload. */
-export function resetGravityClients(): void {
+export function resetChainClients(): void {
   cachedClients = null;
 }

@@ -12,6 +12,8 @@
 
 - [Autenticación](#autenticación)
 - [Convenciones](#convenciones)
+- [EAS — Attestations on-chain](#eas--attestations-on-chain)
+- [EVVM — Virtual Blockchain](#evvm--virtual-blockchain)
 - [Health Check](#health-check)
 - [Emitir certificado](#emitir-certificado)
 - [Consultar certificado](#consultar-certificado)
@@ -39,6 +41,58 @@
 | IDs de certificado | UUID v4 (`certificateId`) |
 | Hashes on-chain | Hex string con prefijo `0x` (`certificateHash`) |
 | Timestamps | ISO 8601 UTC (`createdAt`, `updatedAt`) |
+| Attestation UID | Hex string `0x...` — identificador único EAS on-chain |
+
+---
+
+## EAS — Attestations on-chain
+
+API Angulo utiliza **[Ethereum Attestation Service (EAS)](https://docs.attest.org/docs/welcome)** para registrar certificaciones de impacto como attestations verificables en Gravity.
+
+### ¿Qué es una attestation EAS?
+
+Una attestation es una firma digital sobre datos estructurados registrada on-chain. En nuestro caso, el relayer operacional attesta que una empresa (`companyTaxId`) ha generado un impacto medible, referenciando evidencia en IPFS.
+
+### Schema de impacto
+
+```
+string companyTaxId, string impactCategory, uint256 amount, string ipfsEvidence
+```
+
+### Flujo EAS en la API
+
+1. Cliente envía `POST /api/v1/certificates/issue`
+2. API sube evidencia a IPFS → obtiene CID
+3. Relayer emite `eas.attest()` con el schema registrado
+4. EAS retorna `attestationUID` — identificador público y verificable
+5. Respuesta de consulta incluye `attestationUID` cuando `status: CONFIRMED`
+
+### Verificación pública
+
+| Método | Descripción |
+|---|---|
+| EAS SDK | `eas.getAttestation(uid)` |
+| GraphQL API | [EAS GraphQL](https://docs.attest.org/docs/developer-tools/api) |
+| EAS Explorer | Exploradores compatibles con EAS |
+
+> Guía completa de integración: **[docs/EAS.md](./EAS.md)**
+
+---
+
+## EVVM — Virtual Blockchain
+
+API Angulo despliega una instancia **[EVVM](https://www.evvm.info/docs/QuickStart)** sobre Gravity como capa de ejecución. EVVM es compatible con EAS y habilita attestations gasless.
+
+| Componente | Rol |
+|---|---|
+| **Gravity** | Host chain (seguridad + finalidad) |
+| **EVVM** | Blockchain virtual (sin infra propia) |
+| **EAS** | Attestations de impacto dentro del EVVM |
+| **Fishers** | Ejecutan transacciones on-chain (relayer paga gas) |
+
+El cliente B2B nunca interactúa con EVVM directamente — la API abstrae todo el flujo Web3.
+
+> Guía de despliegue: **[docs/EVVM.md](./EVVM.md)**
 
 ---
 
@@ -218,6 +272,7 @@ GET /api/v1/certificates/:id
   "amount": "15000",
   "ipfsCid": "bafybeig8f3a2b1c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7a1b2c3d4",
   "status": "CONFIRMED",
+  "attestationUID": "0xff08bbf3d3e6e0992fc70ab9b9370416be59e87897c3d42b20549901d2cccc3e",
   "txHash": "0xabc123def4567890abcdef1234567890abcdef1234567890abcdef1234567890",
   "blockNumber": "1234567",
   "createdAt": "2026-07-12T08:00:00.000Z",
@@ -310,9 +365,9 @@ PROCESSING ──► CONFIRMED
 sequenceDiagram
     participant Cliente as Cliente B2B
     participant API as Fastify API
-    participant IPFS as IPFS (mock)
+    participant IPFS as IPFS
     participant Relayer as Web3 Relayer
-    participant Gravity as Gravity Blockchain
+    participant EAS as EAS (Gravity)
 
     Cliente->>API: POST /api/v1/certificates/issue
     API->>API: Validar payload (Zod)
@@ -322,15 +377,15 @@ sequenceDiagram
     API-->>Cliente: 202 { certificateId, status: PROCESSING }
 
     par Procesamiento asíncrono
-        API->>Relayer: sendImpactAttestationOnchain()
-        Relayer->>Gravity: emitCertificate()
-        Gravity-->>Relayer: txHash + receipt
+        API->>Relayer: eas.attest(schema, encodedData)
+        Relayer->>EAS: Attestation on-chain
+        EAS-->>Relayer: attestationUID + txHash
         Relayer-->>API: CONFIRMED
     end
 
     loop Polling (cada 2-5s)
         Cliente->>API: GET /api/v1/certificates/:id
-        API-->>Cliente: { status: PROCESSING | CONFIRMED | FAILED }
+        API-->>Cliente: { status, attestationUID }
     end
 ```
 
@@ -410,6 +465,7 @@ interface CertificateRecord {
   amount: string;
   ipfsCid: string;
   status: CertificateStatus;
+  attestationUID?: `0x${string}`; // UID EAS — presente cuando status = CONFIRMED
   txHash?: `0x${string}`;       // Presente cuando status = CONFIRMED
   blockNumber?: string;          // Presente cuando status = CONFIRMED
   errorMessage?: string;         // Presente cuando status = FAILED
@@ -418,7 +474,24 @@ interface CertificateRecord {
 }
 ```
 
-### Certificado on-chain (Smart Contract)
+### Attestation EAS (on-chain)
+
+Cada certificado confirmado genera una attestation EAS con el siguiente schema:
+
+```
+string companyTaxId, string impactCategory, uint256 amount, string ipfsEvidence
+```
+
+| Campo EAS | Tipo | Descripción |
+|---|---|---|
+| `uid` | `bytes32` | Identificador único de la attestation (`attestationUID`) |
+| `schema` | `bytes32` | UID del schema `ImpactCertification` |
+| `attester` | `address` | Wallet del relayer operacional |
+| `time` | `uint64` | Timestamp de emisión on-chain |
+| `revocable` | `bool` | Si la attestation puede revocarse |
+| `data` | `bytes` | Datos codificados del schema |
+
+### Certificado on-chain (contrato custom — legacy)
 
 ```solidity
 struct Certificate {
@@ -466,6 +539,7 @@ keccak256(abi.encodePacked(
 |---|---|
 | Almacenamiento | In-memory (reinicio del servidor pierde registros). Migrar a PostgreSQL/Redis en producción. |
 | IPFS | Mock actual. Integrar servicio real (Pinata, NFT.Storage) para producción. |
+| EAS | Attestations on-chain vía [Ethereum Attestation Service](https://docs.attest.org/docs/welcome). Ver [EAS.md](./EAS.md). |
 | Rate limiting | No implementado. Agregar antes de exposición pública. |
 | Idempotencia | No hay clave de idempotencia. Cada request genera un certificado nuevo. |
 | Concurrencia | Múltiples emisiones simultáneas soportadas; el relayer serializa transacciones por nonce. |

@@ -1,22 +1,29 @@
 import 'dotenv/config';
 import { z } from 'zod';
-import type { GravityNetwork } from '../chains/gravity.js';
+import { EAS_PREDEPLOY } from '../chains/base.js';
+import type { BaseNetwork } from '../chains/base.js';
+
+const hexAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
+const hexBytes32 = z.string().regex(/^0x[a-fA-F0-9]{64}$/);
+const hexPrivateKey = z.string().regex(/^0x[a-fA-F0-9]{64}$/);
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   HOST: z.string().default('0.0.0.0'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
-  GRAVITY_NETWORK: z.enum(['mainnet', 'alpha', 'sepolia']).default('mainnet'),
-  GRAVITY_RPC_URL: z.string().url().optional(),
+  BASE_NETWORK: z.enum(['mainnet', 'sepolia']).default('sepolia'),
+  BASE_RPC_URL: z.string().url().optional(),
 
-  RELAYER_PRIVATE_KEY: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{64}$/, 'RELAYER_PRIVATE_KEY must be a 32-byte hex private key'),
+  RELAYER_PRIVATE_KEY: hexPrivateKey,
 
-  IMPACT_REGISTRY_CONTRACT_ADDRESS: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{40}$/, 'IMPACT_REGISTRY_CONTRACT_ADDRESS must be a valid address'),
+  EAS_CONTRACT_ADDRESS: hexAddress.default(EAS_PREDEPLOY.eas),
+  EAS_SCHEMA_REGISTRY_ADDRESS: hexAddress.default(EAS_PREDEPLOY.schemaRegistry),
+  EAS_IMPACT_SCHEMA_UID: hexBytes32.optional(),
+
+  EVVM_CORE_ADDRESS: hexAddress.optional(),
+  EVVM_STAKING_ADDRESS: hexAddress.optional(),
+  EVVM_ID: z.coerce.number().int().nonnegative().default(0),
 
   TX_CONFIRMATIONS: z.coerce.number().int().min(1).default(1),
   TX_TIMEOUT_MS: z.coerce.number().int().min(5_000).default(120_000),
@@ -39,4 +46,4 @@ function loadEnv(): Env {
 }
 
 export const env = loadEnv();
-export const gravityNetwork = env.GRAVITY_NETWORK as GravityNetwork;
+export const baseNetwork = env.BASE_NETWORK as BaseNetwork;

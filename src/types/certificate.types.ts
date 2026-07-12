@@ -8,6 +8,7 @@ export interface CertificateRecord {
   amount: string;
   ipfsCid: string;
   status: CertificateStatus;
+  attestationUID?: `0x${string}`;
   txHash?: `0x${string}`;
   blockNumber?: bigint;
   errorMessage?: string;
@@ -25,6 +26,7 @@ export interface IssueCertificateResponse {
 
 export interface ImpactAttestationResult {
   certificateHash: `0x${string}`;
+  attestationUID: `0x${string}`;
   txHash: `0x${string}`;
   blockNumber: bigint;
 }
